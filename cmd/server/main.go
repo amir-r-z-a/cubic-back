@@ -23,7 +23,7 @@ func main() {
 
 	userRepo := repos.NewUserRepo(appRepo)
 
-	userService := 	services.NewUserService(userRepo, appConfig)
+	userService := 	services.NewUserService(userRepo, appConfig, appConfig.SecretKey)
 	
 
 	app := server.NewWebServer()

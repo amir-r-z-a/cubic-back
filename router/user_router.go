@@ -14,7 +14,7 @@ func AddUserRoutes(app *gin.Engine, userService *services.UserService) {
 	}
 
 	v0Private := app.Group("api/v0/private")
-	v0Private.Use(middleware.AuthMiddleware(userService.SecretKey, userService))
+	v0Private.Use(middleware.AuthMiddleware(userService))
 	{
 		v0Private.GET("/user", userService.GetUser)
 	}

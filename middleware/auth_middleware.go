@@ -21,7 +21,7 @@ func verifyToken(tokenString string, secret []byte) (interface{}, error) {
 	return token.Claims, nil
 }
 
-func AuthMiddleware(secretKey []byte, userService *services.UserService) gin.HandlerFunc {
+func AuthMiddleware(userService *services.UserService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
 
@@ -36,7 +36,7 @@ func AuthMiddleware(secretKey []byte, userService *services.UserService) gin.Han
 			return
 		}
 
-		claims, err := verifyToken(token, secretKey)
+		claims, err := verifyToken(token, userService.SecretKey)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			userService.Logger.Error("Invalid token")

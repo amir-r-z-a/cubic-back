@@ -1,10 +1,30 @@
 package models
 
-import "gorm.io/gorm"
+import "golang.org/x/crypto/bcrypt"
 
 type User struct {
-	gorm.Model
+	ID           int
 	Username     string
 	PasswordHash string
-	Age          int
+}
+
+type SignUpInput struct {
+	Username string `json:"username" binding:"required,min=4"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+type SignInInput struct {
+	Username string `json:"username" binding:"required,min=4"`
+	Password string `json:"password" binding:"required,min=6"`
+}
+
+func HashPassword(password string) (string, error) {
+    bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+    return string(bytes), err
+}
+
+
+func VerifyPassword(password, hash string) bool {
+    err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+    return err == nil
 }

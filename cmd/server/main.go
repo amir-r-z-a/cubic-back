@@ -3,7 +3,6 @@ package main
 import (
 	"log/slog"
 	"os"
-
 	"github.com/amir-r-z-a/cubic-back/config"
 	"github.com/amir-r-z-a/cubic-back/repos"
 	"github.com/amir-r-z-a/cubic-back/router"
@@ -25,18 +24,10 @@ func main() {
 
 	userService := 	services.NewUserService(userRepo, appConfig, appConfig.SecretKey)
 	
-
 	app := server.NewWebServer()
 
 	router.AddUserRoutes(app, userService)
 
 	server.Run(app, appConfig)
 
-	
-
-	
-
-
 }
-
-

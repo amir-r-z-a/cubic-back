@@ -2,7 +2,9 @@ package services
 
 import (
 	"log/slog"
+	"regexp"
 	"time"
+
 	"github.com/amir-r-z-a/cubic-back/config"
 	"github.com/amir-r-z-a/cubic-back/models"
 	"github.com/amir-r-z-a/cubic-back/repos"
@@ -11,29 +13,24 @@ import (
 )
 
 type UserService struct {
-	Repo   *repos.UserRepo
-	Logger *slog.Logger
+	Repo      *repos.UserRepo
+	Logger    *slog.Logger
 	SecretKey []byte
 }
 
-
-
 func (us *UserService) createToken(username string) (string, error) {
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, 
-        jwt.MapClaims{ 
-        "username": username, 
-        "exp": time.Now().Add(time.Hour * 24).Unix(), 
-        })
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"username": username,
+			"exp":      time.Now().Add(time.Hour * 24).Unix(),
+		})
 
-    tokenString, err := token.SignedString(us.SecretKey)
-    if err != nil {
-    return "", err
-    }
- return tokenString, nil
+	tokenString, err := token.SignedString(us.SecretKey)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }
-
-
-
 
 func NewUserService(userRepo *repos.UserRepo, appConf *config.AppConfig, secret []byte) *UserService {
 	return &UserService{Repo: userRepo, Logger: appConf.Logger, SecretKey: secret}
@@ -41,8 +38,10 @@ func NewUserService(userRepo *repos.UserRepo, appConf *config.AppConfig, secret 
 
 func (us UserService) SignUp(c *gin.Context) {
 
+	var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
+
 	signUpStruct := struct {
-		Username    string `json:"username" binding:"required,min=4"`
+		Username string `json:"username" binding:"required"`
 		Password string `json:"password" binding:"required,min=6"`
 	}{}
 
@@ -52,9 +51,15 @@ func (us UserService) SignUp(c *gin.Context) {
 		return
 	}
 
-	res, err := us.Repo.CreateUser(signUpStruct.Username, signUpStruct.Password);
+	if !emailRegex.MatchString(signUpStruct.Username) {
+		us.Logger.Error("Invalid email format", "username", signUpStruct.Username)
+		c.JSON(400, gin.H{"error": "Invalid email format"})
+		return
+	}
 
-	if  err != nil {
+	res, err := us.Repo.CreateUser(signUpStruct.Username, signUpStruct.Password)
+
+	if err != nil {
 		us.Logger.Error("Failed to create user", "error", err)
 		c.JSON(500, gin.H{"error": "Failed to create user"})
 		return
@@ -64,14 +69,12 @@ func (us UserService) SignUp(c *gin.Context) {
 	if err != nil {
 		us.Logger.Error("Failed to create token", "error", err)
 		c.JSON(500, gin.H{"error": "Failed to create token"})
-		return	
+		return
 	}
 
-	c.JSON(200, gin.H{"token": token})
+	c.JSON(201, gin.H{"token": token})
 	us.Logger.Info("User created successfully", "id", res)
 }
-
-
 
 func (us UserService) GetUser(c *gin.Context) {
 	claims := c.MustGet("claims").(jwt.MapClaims)
@@ -89,13 +92,9 @@ func (us UserService) GetUser(c *gin.Context) {
 	us.Logger.Info("User retrieved successfully", "id", user.ID)
 }
 
-
-
-
-
 func (us UserService) SignIn(c *gin.Context) {
 	signInStruct := struct {
-		Username    string `json:"username" binding:"required,min=4"`
+		Username string `json:"username" binding:"required,min=4"`
 		Password string `json:"password" binding:"required,min=6"`
 	}{}
 
@@ -123,7 +122,7 @@ func (us UserService) SignIn(c *gin.Context) {
 	if err != nil {
 		us.Logger.Error("Failed to create token", "error", err)
 		c.JSON(500, gin.H{"error": "Failed to create token"})
-		return	
+		return
 	}
 
 	c.JSON(200, gin.H{"token": token})

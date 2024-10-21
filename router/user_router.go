@@ -7,6 +7,9 @@ import (
 )
 
 func AddUserRoutes(app *gin.Engine, userService *services.UserService) {
+
+	app.Use(middleware.CORSMiddleware())
+
 	v0Public := app.Group("api/v0/public")
 	{
 		v0Public.POST("/signup", userService.SignUp)

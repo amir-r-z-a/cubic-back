@@ -1,13 +1,12 @@
-
 package middleware
 
 import (
 	"net/http"
 	"strings"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/gin-gonic/gin"
-	"github.com/amir-r-z-a/cubic-back/services"
 
+	"github.com/amir-r-z-a/cubic-back/services"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func verifyToken(tokenString string, secret []byte) (interface{}, error) {
@@ -44,24 +43,39 @@ func AuthMiddleware(userService *services.UserService) gin.HandlerFunc {
 			return
 		}
 
-		c.Set("claims", claims)
+		// Extract username from claims
+		mapClaims := claims.(jwt.MapClaims)
+		username := mapClaims["username"].(string)
+
+		// Get user from database
+		user, err := userService.Repo.GetUser(username)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found"})
+			userService.Logger.Error("User not found", "error", err)
+			c.Abort()
+			return
+		}
+
+		// Add user ID to claims
+		mapClaims["user_id"] = user.ID
+		c.Set("claims", mapClaims)
 
 		c.Next()
 	}
 }
 
 func CORSMiddleware() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-        c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-        c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-        c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
 
-        if c.Request.Method == "OPTIONS" {
-            c.AbortWithStatus(204)
-            return
-        }
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
 
-        c.Next()
-    }
+		c.Next()
+	}
 }

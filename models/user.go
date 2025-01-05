@@ -2,12 +2,33 @@ package models
 
 import (
     "golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 type User struct {
-	ID           int
-	Username     string
-	PasswordHash string
+    ID                int
+    Username         string
+    PasswordHash     string
+    Name             string
+    LastName         string
+    Age              *int
+    Gender           string
+    Height           *float64
+    Weight           *float64
+    DiseaseHistory   string
+    CreatedAt        time.Time
+    UpdatedAt        time.Time
+}
+
+// Add a new struct for update input
+type UpdateUserInput struct {
+    Name            string   `json:"name"`
+    LastName        string   `json:"last_name"`
+    Age             *int     `json:"age"`
+    Gender          string   `json:"gender"`
+    Height          *float64 `json:"height"`
+    Weight          *float64 `json:"weight"`
+    DiseaseHistory  string   `json:"disease_history"`
 }
 
 type SignUpInput struct {

@@ -5,6 +5,4 @@ DATABASE_URL="postgresql://postgres:pgpassword@localhost:5432/cubikdb?sslmode=di
 # Force the version to clean up dirty state
 migrate -path="$MIGRATION_PATH" -database "$DATABASE_URL" force 20250103095001
 
-migrate -path="$MIGRATION_PATH" -database "$DATABASE_URL" -verbose down
-
 migrate -path="$MIGRATION_PATH" -database "$DATABASE_URL" -verbose up

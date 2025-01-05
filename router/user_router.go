@@ -7,7 +7,6 @@ import (
 )
 
 func AddUserRoutes(app *gin.Engine, userService *services.UserService) {
-
 	app.Use(middleware.CORSMiddleware())
 
 	v0Public := app.Group("api/v0/public")
@@ -20,5 +19,7 @@ func AddUserRoutes(app *gin.Engine, userService *services.UserService) {
 	v0Private.Use(middleware.AuthMiddleware(userService))
 	{
 		v0Private.GET("/user", userService.GetUser)
+		v0Private.GET("/user/profile", userService.GetUserProfile)
+		v0Private.PUT("/user/profile", userService.UpdateUserProfile)
 	}
 }

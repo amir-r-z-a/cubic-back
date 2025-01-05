@@ -22,7 +22,7 @@ func (us *UserService) createToken(username string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"username": username,
-			"exp":      time.Now().Add(time.Hour * 24).Unix(),
+			"exp":      time.Now().Add(time.Hour * 500).Unix(),
 		})
 
 	tokenString, err := token.SignedString(us.SecretKey)
@@ -127,4 +127,53 @@ func (us UserService) SignIn(c *gin.Context) {
 
 	c.JSON(200, gin.H{"token": token})
 	us.Logger.Info("User signed in successfully", "id", user.ID)
+}
+
+func (us UserService) UpdateUserProfile(c *gin.Context) {
+	claims := c.MustGet("claims").(jwt.MapClaims)
+	userID := int(claims["user_id"].(int))
+
+	var input models.UpdateUserInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		us.Logger.Error("Failed to bind request body", "error", err)
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := us.Repo.UpdateUser(userID, input)
+	if err != nil {
+		us.Logger.Error("Failed to update user", "error", err)
+		c.JSON(500, gin.H{"error": "Failed to update user"})
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Profile updated successfully"})
+	us.Logger.Info("User profile updated successfully", "id", userID)
+}
+
+func (us UserService) GetUserProfile(c *gin.Context) {
+	claims := c.MustGet("claims").(jwt.MapClaims)
+	userID := int(claims["user_id"].(int))
+
+	user, err := us.Repo.GetUserProfile(userID)
+	if err != nil {
+		us.Logger.Error("Failed to get user profile", "error", err)
+		c.JSON(500, gin.H{"error": "Failed to get user profile"})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"profile": map[string]interface{}{
+			"id":              user.ID,
+			"username":        user.Username,
+			"name":            user.Name,
+			"last_name":       user.LastName,
+			"age":             user.Age,
+			"gender":          user.Gender,
+			"height":          user.Height,
+			"weight":          user.Weight,
+			"disease_history": user.DiseaseHistory,
+		},
+	})
+	us.Logger.Info("User profile retrieved successfully", "id", user.ID)
 }

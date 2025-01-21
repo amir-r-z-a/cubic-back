@@ -12,5 +12,5 @@ type Score struct {
 
 type SubmitScoreInput struct {
 	GameType GameType `json:"game_type" binding:"required,min=1,max=3"`
-	Score    int      `json:"score" binding:"required"`
+	Score    int      `json:"score" binding:"min=0"`
 }
